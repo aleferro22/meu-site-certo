@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meu site - Versão 3 — corrigida</title>
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      font-family: system-ui, "Segoe UI", Roboto, sans-serif;
+      background: #1e9e5a;
+      padding: 1rem;
+    }
+    .cartao {
+      background: #fff;
+      border-radius: 20px;
+      padding: 2.5rem;
+      max-width: 520px;
+      width: 100%;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, .25);
+      text-align: center;
+      color: #1d1d1f;
+    }
+    .emoji { font-size: 4rem; }
+    h1 { margin: .5rem 0; color: #1e9e5a; }
+    .versao {
+      margin-top: 1.5rem;
+      padding: 1rem;
+      border-radius: 12px;
+      background: #f2f2f7;
+      text-align: left;
+      line-height: 1.8;
+    }
+    code { background: #e5e5ea; padding: 2px 6px; border-radius: 6px; }
+    footer { margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #e5e5ea; color: #6e6e73; font-size: .85rem; }
+  </style>
+</head>
+<body>
+  <main class="cartao">
+    <div class="emoji">✅</div>
+    <h1>Versão 3 — corrigida</h1>
+    <p>O erro foi corrigido e o robô publicou de novo.</p>
+
+    <div class="versao">
+      🤖 <strong>Publicado pelo robô em:</strong> __DATA__<br>
+      🔖 <strong>Commit:</strong> <code>__COMMIT__</code><br>
+      👤 <strong>Enviado por:</strong> __AUTOR__
+    </div>
+
+    <footer>
+      🎓 UNINOVE · Automação de Processos · DevOps<br>
+      Prof. Marcelino Dias da Silva
+    </footer>
+  </main>
+</body>
+</html>
