@@ -1,0 +1,109 @@
+# UNINOVE - Automação de Processos (DevOps) - Prof. Marcelino Dias da Silva
+#
+# Toda vez que alguém envia um arquivo para o GitHub, este robô:
+#
+#   1) VERIFICA o index.html   --tudo certo?-->   2) PUBLICA o site
+#            |
+#            +--achou problema?--> PARA TUDO. O site antigo continua no ar.
+
+name: Publicar site
+
+on:
+  push:
+    branches: [main]      # roda sempre que um arquivo é enviado
+  workflow_dispatch:      # e também pelo botão "Run workflow"
+
+jobs:
+  # ------------------------------------------------------------------
+  # CI - o robô confere se o arquivo está certo
+  # ------------------------------------------------------------------
+  verificar:
+    name: 1 - Verificar arquivo
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar os arquivos do repositório
+        uses: actions/checkout@v7
+
+      - name: Regra 1 - O arquivo index.html existe?
+        run: |
+          if [ -f index.html ]; then
+            echo "✅ Encontrei o arquivo index.html"
+          else
+            echo "::error::❌ Não encontrei o arquivo index.html"
+            exit 1
+          fi
+
+      - name: Regra 2 - O site tem título?
+        run: |
+          if grep -qi "<title>" index.html; then
+            echo "✅ O site tem título"
+          else
+            echo "::error::❌ O site está sem título (<title>)"
+            exit 1
+          fi
+
+      - name: Regra 3 - O arquivo está completo?
+        run: |
+          if grep -qi "</html>" index.html; then
+            echo "✅ O arquivo está completo (termina com </html>)"
+          else
+            echo "::error::❌ O arquivo está INCOMPLETO: não termina com </html>. Deploy bloqueado!"
+            exit 1
+          fi
+
+  # ------------------------------------------------------------------
+  # CD - o robô publica o site no GitHub Pages
+  # ------------------------------------------------------------------
+  publicar:
+    name: 2 - Publicar site
+    needs: verificar      # <-- SÓ roda se a verificação passar!
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    steps:
+      - name: Baixar os arquivos do repositório
+        uses: actions/checkout@v7
+
+      - name: Conferir se o GitHub Pages está ligado
+        id: pages
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh api "repos/${{ github.repository }}/pages" > /dev/null 2>&1; then
+            echo "✅ GitHub Pages está ligado"
+            echo "ligado=sim" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::GitHub Pages ainda não está ligado. Vá em Settings > Pages > Source: GitHub Actions e envie o arquivo de novo."
+            echo "ligado=nao" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Carimbar data, commit e autor no site
+        if: steps.pages.outputs.ligado == 'sim'
+        run: |
+          mkdir -p _site
+          cp index.html _site/index.html
+          sed -i "s|__COMMIT__|${GITHUB_SHA::7}|g"   _site/index.html
+          sed -i "s|__AUTOR__|${{ github.actor }}|g" _site/index.html
+          sed -i "s|__DATA__|$(TZ=America/Sao_Paulo date '+%d/%m/%Y às %H:%M')|g" _site/index.html
+
+      - name: Empacotar o site
+        if: steps.pages.outputs.ligado == 'sim'
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: _site
+
+      - name: Publicar no GitHub Pages
+        if: steps.pages.outputs.ligado == 'sim'
+        id: publicar
+        uses: actions/deploy-pages@v5
+
+      - name: Mostrar o endereço do site
+        if: steps.pages.outputs.ligado == 'sim'
+        run: |
+          echo "🌐 Seu site: ${{ steps.publicar.outputs.page_url }}"
+          echo "## 🌐 Site publicado: ${{ steps.publicar.outputs.page_url }}" >> "$GITHUB_STEP_SUMMARY"
